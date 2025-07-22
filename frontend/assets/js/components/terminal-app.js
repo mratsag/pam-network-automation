@@ -1122,9 +1122,6 @@ class TerminalApplication {
      */
     disconnect() {
         if (confirm('SSH oturumunu sonlandırmak istediğinizden emin misiniz?')) {
-            if (this.terminal) {
-                this.terminal.disconnect();
-            }
             
             this.authService.clearSession();
             this.updateConnectionStatus('disconnected');
@@ -1365,6 +1362,30 @@ class TerminalApplication {
         
         this.isInitialized = false;
         console.log('Terminal Application destroyed');
+    }
+
+    showCommandHistory() {
+        if (this.terminal && typeof this.terminal.showCommandHistory === 'function') {
+            this.terminal.showCommandHistory();
+        } else {
+            this.showError('Komut geçmişi fonksiyonu bulunamadı.');
+        }
+    }
+
+    customizeQuickCommands() {
+        if (this.terminal && typeof this.terminal.customizeQuickCommands === 'function') {
+            this.terminal.customizeQuickCommands();
+        } else {
+            this.showError('Quick commands özelleştirme fonksiyonu bulunamadı.');
+        }
+    }
+
+    toggleQuickCommands() {
+        if (this.terminal && typeof this.terminal.toggleQuickCommands === 'function') {
+            this.terminal.toggleQuickCommands();
+        } else {
+            this.showError('Quick commands göster/gizle fonksiyonu bulunamadı.');
+        }
     }
 }
 

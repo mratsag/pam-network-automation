@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAM Network Device Management</title>
+    <title>Network Device Management</title>
     
     <!-- CSS Files - Modular Structure -->
     <link rel="stylesheet" href="/frontend/assets/css/main.css">
@@ -22,7 +22,7 @@
     <div id="loadingScreen" class="loading-screen">
         <div class="loading-content">
             <div class="loading-spinner-large"></div>
-            <h2>🚀 PAM Network Management</h2>
+            <h2>🚀 Network Management</h2>
             <p>Sistem başlatılıyor...</p>
         </div>
     </div>
@@ -33,7 +33,7 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <h1>🔧 PAM Network Device Management</h1>
+                    <h1>🔧 Network Device Management</h1>
                     <p>Merkezi Ağ Cihazları Yönetim ve Otomasyon Sistemi</p>
                 </div>
                 <div class="header-right">
@@ -211,7 +211,7 @@
                                        name="vault_path" 
                                        class="form-control" 
                                        placeholder="örn: network/devices/switch1">
-                                <div class="form-hint">PAM sistemindeki credential path'i</div>
+                                <div class="form-hint">Sistemindeki credential path'i</div>
                             </div>
                             
                             <div class="form-actions">
@@ -303,7 +303,7 @@
         <footer class="footer">
             <div class="footer-content">
                 <div class="footer-left">
-                    <span>PAM Network Management v1.0</span>
+                    <span>Network Management v1.0</span>
                     <span>•</span>
                     <span id="connectionStatus">🟢 Bağlı</span>
                     <span>•</span>
@@ -446,7 +446,7 @@
             }
             
             async init() {
-                console.log('🚀 PAM Network Management - Initializing...');
+                console.log('🚀 Network Management - Initializing...');
                 
                 try {
                     // Check authentication first
@@ -651,21 +651,17 @@
             
             logout() {
                 this.toggleUserMenu();
-                
-                if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
-                    this.authService.logout();
-                    this.showToast('Güvenli çıkış yapıldı. Yönlendiriliyorsunuz...', 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 1500);
-                }
+                this.authService.logout();
+                this.showToast('Güvenli çıkış yapıldı. Yönlendiriliyorsunuz...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
             }
             
             quickStart() {
                 this.showModal('Hızlı Başlangıç Rehberi', `
                     <div class="quick-start-guide">
-                        <h3>🚀 PAM Network Management'a Hoş Geldiniz!</h3>
+                        <h3>🚀 Network Management'a Hoş Geldiniz!</h3>
                         <div class="guide-steps">
                             <div class="guide-step">
                                 <div class="step-number">1</div>

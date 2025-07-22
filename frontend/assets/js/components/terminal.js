@@ -1,5 +1,5 @@
 /**
- * PAM Network Terminal Application
+ * Network Terminal Application
  * Complete SSH Terminal with Backend Integration
  * Version: 1.0.0
  */
@@ -218,8 +218,6 @@ class Terminal {
         this.showWelcomeMessage();
         this.focusInput();
         
-        console.log('Terminal initialized');
-        this.eventBus.emit('sessionStarted', { sessionData: this.sessionData });
     }
 
     async loadSession() {
@@ -602,7 +600,7 @@ class Terminal {
         const welcomeMsg = {
             command: 'system-message',
             success: true,
-            output: 'PAM SSH Terminal v1.0\n' +
+            output: 'SSH Terminal v1.0\n' +
                    '================================\n\n' +
                    'Connected to: ' + (this.sessionData ? this.sessionData.deviceName : 'Unknown Device') + '\n' +
                    'User: ' + (this.sessionData ? this.sessionData.username : 'unknown') + '\n' +
@@ -659,11 +657,9 @@ class Terminal {
             });
             return;
         }
-        
         const historyOutput = this.commandHistory
-            .map((cmd, index) => (index + 1).toString().padStart(3) + ': ' + cmd)
+            .map((item, index) => (index + 1).toString().padStart(3) + ': ' + (typeof item === 'string' ? item : item.command))
             .join('\n');
-        
         this.appendOutput({
             command: 'history',
             success: true,
@@ -674,16 +670,26 @@ class Terminal {
 
     async loadQuickCommands() {
         if (!this.sessionData || !this.sessionData.deviceId) return;
+
+        const prefs = this.sessionService.getUserPreferences();
+        const deviceType = this.sessionData.deviceType;
+        if (prefs && prefs.customQuickCommands && prefs.customQuickCommands[deviceType]) {
+            this.quickCommands = prefs.customQuickCommands[deviceType];
+            this.updateQuickCommandsUI();
+            return;
+        }
         
         try {
             const result = await this.sshService.getAvailableCommands(this.sessionData.deviceId);
             
             if (result.success && result.commands) {
-                this.quickCommands = Object.values(result.commands);
+                this.quickCommands = Object.values(result.commands).flat();
                 this.updateQuickCommandsUI();
+            } else {
+                throw new Error('API did not return successful commands');
             }
         } catch (error) {
-            console.warn('Failed to load quick commands:', error);
+            console.warn('Failed to load quick commands from API, using defaults:', error);
             
             const defaultCommands = this.getDefaultCommands(this.sessionData ? this.sessionData.deviceType : null);
             this.quickCommands = defaultCommands;
@@ -786,26 +792,12 @@ class Terminal {
     }
 
     disconnect() {
-        if (confirm('SSH oturumunu sonlandırmak istediğinizden emin misiniz?')) {
-            this.isConnected = false;
+        this.isConnected = false;
+        if (this.sessionService && typeof this.sessionService.clearSSHSession === 'function') {
             this.sessionService.clearSSHSession();
-            this.updateConnectionStatus(false);
-            
-            this.appendOutput({
-                command: 'disconnect',
-                success: true,
-                output: 'SSH oturumu sonlandırıldı.\nAna sayfaya yönlendiriliyorsunuz...',
-                local: true
-            });
-            
-            setTimeout(() => {
-                if (window.opener) {
-                    window.close();
-                } else {
-                    window.location.href = 'index.html';
-                }
-            }, 2000);
         }
+        this.updateConnectionStatus(false);
+        window.location.href = 'index.html';
     }
 
     updateConnectionStatus(connected) {
@@ -879,19 +871,119 @@ class Terminal {
     toggleQuickCommands() {
         const quickCommands = document.getElementById('quickCommands');
         if (quickCommands) {
-            const isVisible = quickCommands.style.display !== 'none';
-            quickCommands.style.display = isVisible ? 'none' : 'block';
+            const isVisible = quickCommands.style.display !== 'none' && quickCommands.style.display !== '';
+            quickCommands.style.display = isVisible ? 'none' : 'flex';
         }
     }
 
     customizeQuickCommands() {
-        this.showSuccessMessage('Quick commands customization coming soon...');
+        const existingModal = document.getElementById('quickCommandsModal');
+        if (existingModal) {
+            return;
+        }
+
+        const modalHTML = `
+            <div class="modal" id="quickCommandsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Customize Quick Commands</h2>
+                        <span class="close-btn" id="closeCommandsModalBtn">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Add, remove, or edit quick commands for device type: <strong>${this.escapeHtml(this.sessionData.deviceType)}</strong></p>
+                        <div id="customCommandsList">
+                            <!-- Commands will be listed here -->
+                        </div>
+                        <div class="add-command-form">
+                            <input type="text" id="newCommandInput" placeholder="Enter new command">
+                            <button id="addCommandBtn" class="btn-primary">Add</button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="saveCommandsBtn" class="btn-primary">Save Changes</button>
+                        <button id="cancelCommandsBtn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const modalContainer = document.getElementById('modalContainer');
+        modalContainer.innerHTML = modalHTML;
+        modalContainer.style.display = 'block';
+
+        const commandsListDiv = document.getElementById('customCommandsList');
+        this.quickCommands.forEach(cmd => {
+            const commandEl = this.createEditableCommandElement(cmd);
+            commandsListDiv.appendChild(commandEl);
+        });
+
+        document.getElementById('closeCommandsModalBtn').onclick = () => this.closeCustomizeModal();
+        document.getElementById('cancelCommandsBtn').onclick = () => this.closeCustomizeModal();
+        document.getElementById('addCommandBtn').onclick = () => this.addCommandToModalList();
+        document.getElementById('saveCommandsBtn').onclick = () => this.saveCustomCommands();
+        document.getElementById('newCommandInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.addCommandToModalList();
+            }
+        });
+    }
+
+    createEditableCommandElement(command) {
+        const div = document.createElement('div');
+        div.className = 'editable-command-item';
+        div.innerHTML = `
+            <input type="text" class="command-text-input" value="${this.escapeHtml(command)}">
+            <button class="remove-cmd-btn">&times;</button>
+        `;
+        div.querySelector('.remove-cmd-btn').onclick = (e) => {
+            e.target.parentElement.remove();
+        };
+        return div;
+    }
+
+    addCommandToModalList() {
+        const input = document.getElementById('newCommandInput');
+        if (!input) return;
+        const command = input.value.trim();
+        if (command) {
+            const commandsListDiv = document.getElementById('customCommandsList');
+            const commandEl = this.createEditableCommandElement(command);
+            commandsListDiv.appendChild(commandEl);
+            input.value = '';
+            input.focus();
+        }
+    }
+
+    closeCustomizeModal() {
+        const modalContainer = document.getElementById('modalContainer');
+        if(modalContainer) {
+            modalContainer.innerHTML = '';
+            modalContainer.style.display = 'none';
+        }
+    }
+
+    async saveCustomCommands() {
+        const commandInputs = document.querySelectorAll('#customCommandsList .command-text-input');
+        const newCommands = Array.from(commandInputs).map(input => input.value.trim()).filter(cmd => cmd);
+
+        this.quickCommands = newCommands;
+
+        const prefs = this.sessionService.getUserPreferences() || {};
+        if (!prefs.customQuickCommands) {
+            prefs.customQuickCommands = {};
+        }
+        prefs.customQuickCommands[this.sessionData.deviceType] = newCommands;
+        this.sessionService.setUserPreferences(prefs);
+
+        this.updateQuickCommandsUI();
+        this.closeCustomizeModal();
+        this.showSuccessMessage('Quick commands updated!');
     }
 
     destroy() {
         this.isConnected = false;
         this.sessionService.clearSSHSession();
-        console.log('Terminal destroyed');
     }
 }
 
@@ -939,5 +1031,3 @@ window.addEventListener('unhandledrejection', function(event) {
         window.terminalApp.showError('Beklenmeyen hata: ' + event.reason.message);
     }
 });
-
-console.log('Terminal JavaScript modules loaded successfully');
