@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app/db.json:/app/app/db.json
+      - backend_data:/app/data
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_PATH=/app/app/db.json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL (gelecekte kullanmak için)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: network_management
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    profiles:
+      - database  # Bu profili aktive etmek için: docker-compose --profile database up
+
+volumes:
+  backend_data:
+  postgres_data:

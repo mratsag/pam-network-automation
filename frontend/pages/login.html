@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAM Network Management - Giriş</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+    
+    <style>
+        /* Login Page Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 500px;
+        }
+
+        .login-brand {
+            background: linear-gradient(135deg, #2196F3, #21CBF3);
+            color: white;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-brand::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: rotate(0deg) translate(0, 0); }
+            50% { transform: rotate(180deg) translate(20px, -20px); }
+        }
+
+        .brand-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-form-section {
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .login-title {
+            font-size: 2rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .login-subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .login-form {
+            width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #fff;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: #2196F3;
+            box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25);
+        }
+
+        .form-input.error {
+            border-color: #e74c3c;
+        }
+
+        .password-input-group {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #666;
+            transition: color 0.3s;
+        }
+
+        .password-toggle:hover {
+            color: #2196F3;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+        }
+
+        .remember-me input {
+            transform: scale(1.2);
+        }
+
+        .forgot-password {
+            color: #2196F3;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .forgot-password:hover {
+            color: #1976d2;
+            text-decoration: underline;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #2196F3, #1976d2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(33, 150, 243, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-loading {
+            display: none;
+        }
+
+        .btn-loading.show {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e1e5e9;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .demo-credentials {
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .demo-credentials h4 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .demo-credentials div {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.25rem 0;
+        }
+
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .login-container {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+            }
+
+            .login-brand {
+                padding: 40px 30px;
+                min-height: 200px;
+            }
+
+            .brand-logo {
+                font-size: 3rem;
+            }
+
+            .brand-title {
+                font-size: 1.5rem;
+            }
+
+            .login-form-section {
+                padding: 40px 30px;
+            }
+
+            .login-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .login-brand {
+                padding: 30px 20px;
+            }
+
+            .login-form-section {
+                padding: 30px 20px;
+            }
+
+            .form-options {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 1rem;"></div>
+            <h3>Giriş yapılıyor...</h3>
+            <p>Kimlik bilgileri doğrulanıyor</p>
+        </div>
+    </div>
+
+    <!-- Main Login Container -->
+    <div class="login-container">
+        <!-- Brand Section -->
+        <div class="login-brand">
+            <div class="brand-logo">🔧</div>
+            <h1 class="brand-title">PAM Network</h1>
+            <p class="brand-subtitle">
+                Merkezi Ağ Cihazları Yönetim ve Otomasyon Sistemi
+            </p>
+        </div>
+
+        <!-- Login Form Section -->
+        <div class="login-form-section">
+            <div class="login-header">
+                <h2 class="login-title">Giriş Yap</h2>
+                <p class="login-subtitle">Sisteme erişim için kimlik bilgilerinizi girin</p>
+            </div>
+
+            <!-- Alert Messages -->
+            <div id="alertContainer">
+                <!-- Alerts will be injected here -->
+            </div>
+
+            <!-- Demo Credentials (Development Only) -->
+            <div class="demo-credentials" id="demoCredentials">
+                <h4>🧪 Demo Hesapları:</h4>
+                <div><strong>Admin:</strong> admin / admin123</div>
+                <div><strong>Network:</strong> network / network123</div>
+                <div><strong>Support:</strong> support / support123</div>
+                <div><strong>Operator:</strong> operator / operator123</div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">👤 Kullanıcı Adı</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="form-input"
+                        placeholder="Kullanıcı adınızı girin"
+                        required
+                        autocomplete="username"
+                        autocapitalize="off"
+                    >
+                    <div class="error-message" id="usernameError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">🔑 Şifre</label>
+                    <div class="password-input-group">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input"
+                            placeholder="Şifrenizi girin"
+                            required
+                            autocomplete="current-password"
+                        >
+                        <button type="button" class="password-toggle" id="passwordToggle">
+                            👁️
+                        </button>
+                    </div>
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe" name="rememberMe">
+                        <span>Beni hatırla</span>
+                    </label>
+                    <a href="#" class="forgot-password" id="forgotPasswordLink">
+                        Şifremi unuttum
+                    </a>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginButton">
+                    <span class="btn-text">Giriş Yap</span>
+                    <span class="btn-loading">
+                        <div class="loading-spinner"></div>
+                        Giriş yapılıyor...
+                    </span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>PAM Network Management v1.0</p>
+                <p>&copy; 2024 - Güvenli Ağ Yönetimi</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Authentication Service - Kimlik doğrulama ve oturum yönetimi
+         * SOLID Principles: Single Responsibility, Open/Closed
+         */
+        class AuthService {
+            constructor() {
+                this.baseURL = 'http://localhost:8000';
+                this.sessionKey = 'pam_user_session';
+                this.listeners = new Set();
+            }
+
+            /**
+             * Kullanıcı girişi
+             */
+            async login(credentials) {
+                try {
+                    // Demo implementation - production'da gerçek API çağrısı yapılacak
+                    const result = await this.authenticateUser(credentials);
+                    
+                    if (result.success) {
+                        // Session storage'a kullanıcı bilgilerini kaydet
+                        this.setUserSession(result.user);
+                        this.notifyListeners('loginSuccess', result.user);
+                        return result;
+                    }
+                    
+                    throw new Error(result.message || 'Giriş başarısız');
+                    
+                } catch (error) {
+                    console.error('AuthService.login:', error);
+                    this.notifyListeners('loginError', { error: error.message });
+                    throw error;
+                }
+            }
+
+            /**
+             * Demo kullanıcı doğrulama
+             * Production'da gerçek API endpoint'i ile değiştirilecek
+             */
+            async authenticateUser(credentials) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const demoUsers = {
+                            'admin': {
+                                password: 'admin123',
+                                role: 'administrator',
+                                permissions: ['all'],
+                                fullName: 'System Administrator',
+                                email: 'admin@company.com'
+                            },
+                            'network': {
+                                password: 'network123',
+                                role: 'network_admin',
+                                permissions: ['network_read', 'network_write', 'device_manage'],
+                                fullName: 'Network Administrator',
+                                email: 'network@company.com'
+                            },
+                            'support': {
+                                password: 'support123',
+                                role: 'support',
+                                permissions: ['network_read', 'device_view'],
+                                fullName: 'Technical Support',
+                                email: 'support@company.com'
+                            },
+                            'operator': {
+                                password: 'operator123',
+                                role: 'operator',
+                                permissions: ['device_view'],
+                                fullName: 'Network Operator',
+                                email: 'operator@company.com'
+                            }
+                        };
+
+                        const user = demoUsers[credentials.username];
+                        
+                        if (user && user.password === credentials.password) {
+                            resolve({
+                                success: true,
+                                user: {
+                                    id: Math.floor(Math.random() * 1000),
+                                    username: credentials.username,
+                                    fullName: user.fullName,
+                                    email: user.email,
+                                    role: user.role,
+                                    permissions: user.permissions,
+                                    loginTime: new Date().toISOString(),
+                                    sessionId: `session_${Date.now()}_${Math.random().toString(36).substring(7)}`
+                                },
+                                message: 'Giriş başarılı'
+                            });
+                        } else {
+                            resolve({
+                                success: false,
+                                message: 'Kullanıcı adı veya şifre hatalı'
+                            });
+                        }
+                    }, 1500); // Simulate network delay
+                });
+            }
+
+            /**
+             * Kullanıcı oturum bilgilerini kaydet
+             */
+            setUserSession(userData) {
+                const sessionData = {
+                    ...userData,
+                    timestamp: new Date().toISOString(),
+                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 saat
+                };
+
+                sessionStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
+                localStorage.setItem('pam_remember_user', JSON.stringify({
+                    username: userData.username,
+                    timestamp: new Date().toISOString()
+                }));
+
+                console.log('User session saved:', userData.username);
+            }
+
+            /**
+             * Oturum bilgilerini al
+             */
+            getUserSession() {
+                try {
+                    const sessionData = sessionStorage.getItem(this.sessionKey);
+                    if (!sessionData) return null;
+
+                    const session = JSON.parse(sessionData);
+                    
+                    // Session süresini kontrol et
+                    if (new Date() > new Date(session.expiresAt)) {
+                        this.logout();
+                        return null;
+                    }
+
+                    return session;
+                } catch (error) {
+                    console.error('Get session error:', error);
+                    return null;
+                }
+            }
+
+            /**
+             * Kullanıcının giriş yapmış olup olmadığını kontrol et
+             */
+            isAuthenticated() {
+                const session = this.getUserSession();
+                return !!session;
+            }
+
+            /**
+             * Çıkış yap
+             */
+            logout() {
+                const session = this.getUserSession();
+                sessionStorage.removeItem(this.sessionKey);
+                sessionStorage.removeItem('pam_terminal_ssh_session');
+                
+                this.notifyListeners('logout', { user: session });
+                console.log('User logged out');
+            }
+
+            /**
+             * Hatırlanan kullanıcıyı al
+             */
+            getRememberedUser() {
+                try {
+                    const rememberedData = localStorage.getItem('pam_remember_user');
+                    if (rememberedData) {
+                        const data = JSON.parse(rememberedData);
+                        // 30 gün sonra hatırlamayı sil
+                        if (new Date() - new Date(data.timestamp) < 30 * 24 * 60 * 60 * 1000) {
+                            return data.username;
+                        } else {
+                            localStorage.removeItem('pam_remember_user');
+                        }
+                    }
+                    return null;
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            /**
+             * Event listener ekle
+             */
+            addEventListener(callback) {
+                this.listeners.add(callback);
+            }
+
+            /**
+             * Event listener kaldır
+             */
+            removeEventListener(callback) {
+                this.listeners.delete(callback);
+            }
+
+            /**
+             * Listener'ları bilgilendir
+             */
+            notifyListeners(event, data) {
+                this.listeners.forEach(callback => {
+                    try {
+                        callback(event, data);
+                    } catch (error) {
+                        console.error('AuthService listener error:', error);
+                    }
+                });
+            }
+
+            /**
+             * Kullanıcı yetkilerini kontrol et
+             */
+            hasPermission(permission) {
+                const session = this.getUserSession();
+                if (!session) return false;
+
+                return session.permissions.includes('all') || 
+                       session.permissions.includes(permission);
+            }
+
+            /**
+             * Rolü kontrol et
+             */
+            hasRole(role) {
+                const session = this.getUserSession();
+                if (!session) return false;
+
+                return session.role === role || session.role === 'administrator';
+            }
+        }
+
+        /**
+         * Login UI Controller - Giriş sayfası kontrolcüsü
+         */
+        class LoginController {
+            constructor() {
+                this.authService = new AuthService();
+                this.isLoading = false;
+                
+                this.elements = {
+                    form: document.getElementById('loginForm'),
+                    username: document.getElementById('username'),
+                    password: document.getElementById('password'),
+                    loginButton: document.getElementById('loginButton'),
+                    passwordToggle: document.getElementById('passwordToggle'),
+                    rememberMe: document.getElementById('rememberMe'),
+                    forgotPassword: document.getElementById('forgotPasswordLink'),
+                    alertContainer: document.getElementById('alertContainer'),
+                    loadingOverlay: document.getElementById('loadingOverlay'),
+                    demoCredentials: document.getElementById('demoCredentials')
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadRememberedUser();
+                this.checkExistingSession();
+                this.setupAuthServiceListeners();
+
+                // Focus username field
+                this.elements.username.focus();
+
+                // Hide demo credentials in production
+                if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                    this.elements.demoCredentials.style.display = 'none';
+                }
+
+                console.log('Login controller initialized');
+            }
+
+            setupEventListeners() {
+                // Form submission
+                this.elements.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+
+                // Password toggle
+                this.elements.passwordToggle.addEventListener('click', () => {
+                    this.togglePasswordVisibility();
+                });
+
+                // Forgot password
+                this.elements.forgotPassword.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleForgotPassword();
+                });
+
+                // Real-time validation
+                this.elements.username.addEventListener('input', () => {
+                    this.clearFieldError('username');
+                });
+
+                this.elements.password.addEventListener('input', () => {
+                    this.clearFieldError('password');
+                });
+
+                // Demo credential clicks
+                this.elements.demoCredentials.addEventListener('click', (e) => {
+                    if (e.target.closest('div') && e.target.textContent.includes(':')) {
+                        const text = e.target.textContent;
+                        const parts = text.split(':')[1].trim().split(' / ');
+                        if (parts.length === 2) {
+                            this.elements.username.value = parts[0];
+                            this.elements.password.value = parts[1];
+                            this.clearAllErrors();
+                        }
+                    }
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                        e.preventDefault();
+                        this.handleLogin();
+                    }
+                });
+            }
+
+            setupAuthServiceListeners() {
+                this.authService.addEventListener((event, data) => {
+                    switch (event) {
+                        case 'loginSuccess':
+                            this.handleLoginSuccess(data);
+                            break;
+                        case 'loginError':
+                            this.handleLoginError(data);
+                            break;
+                    }
+                });
+            }
+
+            async handleLogin() {
+                if (this.isLoading) return;
+
+                const credentials = this.getFormData();
+                if (!this.validateForm(credentials)) return;
+
+                this.setLoading(true);
+                this.clearAllErrors();
+
+                try {
+                    await this.authService.login(credentials);
+                    // Success handling is done in authService listener
+                } catch (error) {
+                    // Error handling is done in authService listener
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            getFormData() {
+                return {
+                    username: this.elements.username.value.trim(),
+                    password: this.elements.password.value,
+                    rememberMe: this.elements.rememberMe.checked
+                };
+            }
+
+            validateForm(credentials) {
+                let isValid = true;
+
+                if (!credentials.username) {
+                    this.showFieldError('username', 'Kullanıcı adı gerekli');
+                    isValid = false;
+                }
+
+                if (!credentials.password) {
+                    this.showFieldError('password', 'Şifre gerekli');
+                    isValid = false;
+                }
+
+                if (credentials.password.length < 6) {
+                    this.showFieldError('password', 'Şifre en az 6 karakter olmalı');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            handleLoginSuccess(userData) {
+                this.showAlert('success', `Hoş geldiniz, ${userData.fullName}!`);
+                
+                // Redirect to main page after short delay
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            }
+
+            handleLoginError(data) {
+                this.showAlert('error', data.error || 'Giriş başarısız');
+            }
+
+            loadRememberedUser() {
+                const rememberedUser = this.authService.getRememberedUser();
+                if (rememberedUser) {
+                    this.elements.username.value = rememberedUser;
+                    this.elements.rememberMe.checked = true;
+                    this.elements.password.focus();
+                }
+            }
+
+            checkExistingSession() {
+                if (this.authService.isAuthenticated()) {
+                    this.showAlert('warning', 'Zaten giriş yapmış durumdasınız. Ana sayfaya yönlendiriliyorsunuz...');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                }
+            }
+
+            setLoading(loading) {
+                this.isLoading = loading;
+                const button = this.elements.loginButton;
+                const btnText = button.querySelector('.btn-text');
+                const btnLoading = button.querySelector('.btn-loading');
+                const overlay = this.elements.loadingOverlay;
+
+                if (loading) {
+                    button.disabled = true;
+                    btnText.style.display = 'none';
+                    btnLoading.classList.add('show');
+                    overlay.classList.add('show');
+                } else {
+                    button.disabled = false;
+                    btnText.style.display = 'inline';
+                    btnLoading.classList.remove('show');
+                    overlay.classList.remove('show');
+                }
+            }
+
+            togglePasswordVisibility() {
+                const passwordField = this.elements.password;
+                const toggleButton = this.elements.passwordToggle;
+
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    toggleButton.textContent = '🙈';
+                } else {
+                    passwordField.type = 'password';
+                    toggleButton.textContent = '👁️';
+                }
+            }
+
+            showAlert(type, message) {
+                const alertHTML = `
+                    <div class="alert alert-${type} show">
+                        ${message}
+                    </div>
+                `;
+                
+                this.elements.alertContainer.innerHTML = alertHTML;
+                
+                // Auto hide after 5 seconds
+                setTimeout(() => {
+                    const alert = this.elements.alertContainer.querySelector('.alert');
+                    if (alert) {
+                        alert.classList.remove('show');
+                        setTimeout(() => {
+                            this.elements.alertContainer.innerHTML = '';
+                        }, 300);
+                    }
+                }, 5000);
+            }
+
+            showFieldError(fieldName, message) {
+                const field = this.elements[fieldName];
+                const errorElement = document.getElementById(fieldName + 'Error');
+                
+                field.classList.add('error');
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+            }
+
+            clearFieldError(fieldName) {
+                const field = this.elements[fieldName];
+                const errorElement = document.getElementById(fieldName + 'Error');
+                
+                field.classList.remove('error');
+                errorElement.classList.remove('show');
+            }
+
+            clearAllErrors() {
+                ['username', 'password'].forEach(fieldName => {
+                    this.clearFieldError(fieldName);
+                });
+            }
+
+            handleForgotPassword() {
+                this.showAlert('warning', 'Şifre sıfırlama özelliği yakında eklenecek. Lütfen sistem yöneticinizle iletişime geçin.');
+            }
+        }
+
+        // Initialize login controller when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new LoginController();
+        });
+
+        // Global error handler
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e.error);
+        });
+
+        // Handle back button
+        window.addEventListener('popstate', (e) => {
+            // Prevent going back while logged in
+            if (sessionStorage.getItem('pam_user_session')) {
+                history.pushState(null, null, window.location.href);
+            }
+        });
+    </script>
+</body>
+</html>

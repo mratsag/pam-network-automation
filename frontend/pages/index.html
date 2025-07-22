@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAM Network Device Management</title>
+    
+    <!-- CSS Files - Modular Structure -->
+    <link rel="stylesheet" href="/frontend/assets/css/main.css">
+    <link rel="stylesheet" href="/frontend/assets/css/common.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+    
+    <!-- Meta Tags -->
+    <meta name="description" content="PAM destekli merkezi ağ cihazları yönetim ve otomasyon sistemi">
+    <meta name="keywords" content="PAM, SSH, network management, automation">
+    <meta name="author" content="PAM Network Management System">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner-large"></div>
+            <h2>🚀 PAM Network Management</h2>
+            <p>Sistem başlatılıyor...</p>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="main-app d-none">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>🔧 PAM Network Device Management</h1>
+                    <p>Merkezi Ağ Cihazları Yönetim ve Otomasyon Sistemi</p>
+                </div>
+                <div class="header-right">
+                    <div class="header-stats" id="headerStats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="headerDeviceCount">-</span>
+                            <span class="stat-label">Cihaz</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="headerConnectionCount">-</span>
+                            <span class="stat-label">Bağlantı</span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <!-- User Info -->
+                        <div class="user-info" id="userInfo">
+                            <div class="user-avatar" id="userAvatar">👤</div>
+                            <div class="user-details">
+                                <div class="user-name" id="userName">-</div>
+                                <div class="user-role" id="userRole">-</div>
+                            </div>
+                            <div class="user-menu-toggle" onclick="app.toggleUserMenu()">▼</div>
+                            <div class="user-menu" id="userMenu" style="display: none;">
+                                <div class="menu-item" onclick="app.showUserProfile()">
+                                    👤 Profil
+                                </div>
+                                <div class="menu-item" onclick="app.showSettings()">
+                                    ⚙️ Ayarlar
+                                </div>
+                                <div class="menu-divider"></div>
+                                <div class="menu-item" onclick="app.exportData()">
+                                    💾 Verileri Dışa Aktar
+                                </div>
+                                <div class="menu-item" onclick="app.showAuditLogs()">
+                                    📜 Audit Logları
+                                </div>
+                                <div class="menu-divider"></div>
+                                <div class="menu-item logout-item" onclick="app.logout()">
+                                    🚪 Çıkış Yap
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Container -->
+        <div class="main-container">
+            <!-- Content Area -->
+            <main class="content">
+                <!-- System Messages -->
+                <div id="systemMessages" class="system-messages"></div>
+                
+                <!-- User Welcome Banner -->
+                <section class="welcome-banner" id="welcomeBanner">
+                    <div class="welcome-content">
+                        <h2>Hoş geldiniz, <span id="welcomeUserName">-</span>! 👋</h2>
+                        <p>Son giriş: <span id="lastLoginTime">-</span></p>
+                        <div class="welcome-actions">
+                            <button class="btn btn-primary" onclick="app.quickStart()">
+                                🚀 Hızlı Başlangıç
+                            </button>
+                            <button class="btn btn-secondary" onclick="app.showUserGuide()">
+                                📖 Kullanım Kılavuzu
+                            </button>
+                        </div>
+                    </div>
+                    <div class="welcome-stats">
+                        <div class="stat-card mini">
+                            <div class="stat-number" id="userSessionsCount">0</div>
+                            <div class="stat-label">Toplam Oturum</div>
+                        </div>
+                        <div class="stat-card mini">
+                            <div class="stat-number" id="userCommandsCount">0</div>
+                            <div class="stat-label">Çalıştırılan Komut</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Stats Dashboard -->
+                <section class="stats-section">
+                    <div class="stats-grid" id="statsContainer">
+                        <!-- Stats will be injected here by deviceService -->
+                    </div>
+                </section>
+                
+                <!-- Quick Actions -->
+                <section class="quick-actions-section">
+                    <div class="section-header">
+                        <h2>⚡ Hızlı İşlemler</h2>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" onclick="app.addDeviceQuick()" title="Hızlı Cihaz Ekle">
+                            ➕ Cihaz Ekle
+                        </button>
+                        <button class="quick-action-btn" onclick="app.batchHealthCheck()" title="Tüm Cihazları Kontrol Et">
+                            ❤️ Toplu Sağlık Kontrolü
+                        </button>
+                        <button class="quick-action-btn" onclick="app.showRecentConnections()" title="Son Bağlantılar">
+                            📋 Son Bağlantılar
+                        </button>
+                        <button class="quick-action-btn" onclick="app.openTerminalManager()" title="Terminal Yöneticisi">
+                            🖥️ Terminal Manager
+                        </button>
+                    </div>
+                </section>
+                
+                <!-- Add Device Section -->
+                <section class="section" id="addDeviceSection">
+                    <div class="section-header">
+                        <h2>➕ Yeni Cihaz Ekle</h2>
+                        <button class="btn btn-link btn-sm" onclick="app.toggleAddDeviceSection()">
+                            <span id="addDeviceToggleText">🔽 Gizle</span>
+                        </button>
+                    </div>
+                    
+                    <div class="form-container" id="addDeviceContainer">
+                        <form id="addDeviceForm" class="add-device-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="deviceName">
+                                        📱 Cihaz Adı:
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           id="deviceName" 
+                                           name="name" 
+                                           class="form-control" 
+                                           required 
+                                           placeholder="örn: Ana Switch"
+                                           autocomplete="off">
+                                    <div class="form-hint">Cihazın tanımlayıcı adını girin</div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="deviceIP">
+                                        📍 IP Adresi:
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           id="deviceIP" 
+                                           name="ip" 
+                                           class="form-control" 
+                                           required 
+                                           placeholder="örn: 192.168.1.1"
+                                           pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
+                                    <div class="form-hint">Geçerli bir IPv4 adresi girin</div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="deviceType">
+                                        🔧 Cihaz Tipi:
+                                        <span class="required">*</span>
+                                    </label>
+                                    <select id="deviceType" name="type" class="form-control" required>
+                                        <option value="">Seçiniz...</option>
+                                        <option value="cisco_ios">🔌 Cisco IOS Switch/Router</option>
+                                        <option value="cisco_asa">🔥 Cisco ASA Firewall</option>
+                                        <option value="mikrotik">📡 MikroTik RouterOS</option>
+                                        <option value="ubuntu">🐧 Ubuntu/Linux Server</option>
+                                        <option value="windows">🪟 Windows Server</option>
+                                        <option value="juniper">🌿 Juniper Network Device</option>
+                                    </select>
+                                    <div class="form-hint">Cihazın işletim sistemi tipini seçin</div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vaultPath">
+                                    🔐 Vault Path (İsteğe Bağlı):
+                                </label>
+                                <input type="text" 
+                                       id="vaultPath" 
+                                       name="vault_path" 
+                                       class="form-control" 
+                                       placeholder="örn: network/devices/switch1">
+                                <div class="form-hint">PAM sistemindeki credential path'i</div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary btn-lg" id="addDeviceBtn">
+                                    <span class="btn-icon">➕</span>
+                                    <span class="btn-text" id="addDeviceButtonText">Cihaz Ekle</span>
+                                    <div class="btn-loading d-none">
+                                        <div class="loading-spinner-small"></div>
+                                    </div>
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="app.resetAddDeviceForm()">
+                                    🔄 Temizle
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+                
+                <!-- SSH Test Panel (Hidden by default) -->
+                <section class="section">
+                    <div id="sshPanelContainer">
+                        <!-- SSH Panel will be injected here -->
+                    </div>
+                </section>
+                
+                <!-- Devices Grid Section -->
+                <section class="section">
+                    <div class="section-header">
+                        <h2>📱 Cihaz Listesi</h2>
+                        <div class="section-controls">
+                            <div class="search-box">
+                                <input type="text" 
+                                       id="deviceSearch" 
+                                       class="form-control form-control-sm" 
+                                       placeholder="🔍 Cihaz ara..."
+                                       onkeyup="app.filterDevices(this.value)">
+                            </div>
+                            <div class="view-controls">
+                                <button class="btn btn-sm btn-secondary" onclick="app.toggleViewMode()" id="viewModeBtn" title="Görünüm Modu">
+                                    📋 Lista
+                                </button>
+                                <button class="btn btn-sm btn-info" onclick="app.selectAllDevices()" title="Tümünü Seç">
+                                    ☑️ Tümünü Seç
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bulk Actions (Hidden by default) -->
+                    <div class="bulk-actions" id="bulkActions" style="display: none;">
+                        <div class="bulk-info">
+                            <span id="selectedCount">0</span> cihaz seçildi
+                        </div>
+                        <div class="bulk-buttons">
+                            <button class="btn btn-sm btn-warning" onclick="app.bulkHealthCheck()">
+                                ❤️ Toplu Sağlık Kontrolü
+                            </button>
+                            <button class="btn btn-sm btn-info" onclick="app.bulkCommand()">
+                                ⚡ Toplu Komut
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="app.bulkDelete()">
+                                🗑️ Toplu Sil
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Devices Container -->
+                    <div class="devices-container" id="devicesContainer">
+                        <div class="loading-placeholder">
+                            <div class="loading-spinner"></div>
+                            <p>Cihazlar yükleniyor...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div class="empty-state" id="emptyState" style="display: none;">
+                        <div class="empty-icon">📱</div>
+                        <h3>Henüz cihaz eklenmemiş</h3>
+                        <p>Başlamak için yukarıdaki formu kullanarak ilk cihazınızı ekleyin.</p>
+                        <button class="btn btn-primary" onclick="app.focusAddDevice()">
+                            ➕ İlk Cihazı Ekle
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+            
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <span>PAM Network Management v1.0</span>
+                    <span>•</span>
+                    <span id="connectionStatus">🟢 Bağlı</span>
+                    <span>•</span>
+                    <span id="userSessionInfo">Oturum: <span id="sessionDuration">00:00</span></span>
+                </div>
+                <div class="footer-right">
+                    <span id="lastUpdate">Son güncelleme: -</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals and Overlays -->
+    <div id="modalContainer"></div>
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- JavaScript Files - Modular Architecture -->
+    <script src="/frontend/assets/js/api/client.js"></script>
+    <script src="/frontend/assets/js/api/endpoints.js"></script>
+    <script src="/frontend/assets/js/services/deviceService.js"></script>
+    <script src="/frontend/assets/js/services/sessionService.js"></script>
+    <script src="/frontend/assets/js/services/sshService.js"></script>
+    <script src="/frontend/assets/js/components/deviceCard.js"></script>
+    <script src="/frontend/assets/js/components/sshPanel.js"></script>
+    
+    <!-- Authentication Service -->
+    <script>
+        /**
+         * Authentication Service - Same as login page
+         */
+        class AuthService {
+            constructor() {
+                this.baseURL = 'http://localhost:8000';
+                this.sessionKey = 'pam_user_session';
+                this.listeners = new Set();
+            }
+
+            getUserSession() {
+                try {
+                    const sessionData = sessionStorage.getItem(this.sessionKey);
+                    if (!sessionData) return null;
+
+                    const session = JSON.parse(sessionData);
+                    
+                    // Session süresini kontrol et
+                    if (new Date() > new Date(session.expiresAt)) {
+                        this.logout();
+                        return null;
+                    }
+
+                    return session;
+                } catch (error) {
+                    console.error('Get session error:', error);
+                    return null;
+                }
+            }
+
+            isAuthenticated() {
+                const session = this.getUserSession();
+                return !!session;
+            }
+
+            logout() {
+                const session = this.getUserSession();
+                sessionStorage.removeItem(this.sessionKey);
+                sessionStorage.removeItem('pam_terminal_ssh_session');
+                localStorage.removeItem('pam_remember_user');
+                
+                this.notifyListeners('logout', { user: session });
+                console.log('User logged out');
+            }
+
+            hasPermission(permission) {
+                const session = this.getUserSession();
+                if (!session) return false;
+
+                return session.permissions.includes('all') || 
+                       session.permissions.includes(permission);
+            }
+
+            hasRole(role) {
+                const session = this.getUserSession();
+                if (!session) return false;
+
+                return session.role === role || session.role === 'administrator';
+            }
+
+            addEventListener(callback) {
+                this.listeners.add(callback);
+            }
+
+            notifyListeners(event, data) {
+                this.listeners.forEach(callback => {
+                    try {
+                        callback(event, data);
+                    } catch (error) {
+                        console.error('AuthService listener error:', error);
+                    }
+                });
+            }
+        }
+
+        // Global auth service instance
+        const authService = new AuthService();
+    </script>
+    
+    <!-- Main Application Controller -->
+    <script>
+        /**
+         * Main Application Controller - SOLID Architecture with Authentication
+         * Dependency Injection ve Event-Driven Design
+         */
+        class MainApplication {
+            constructor() {
+                this.authService = authService;
+                this.deviceService = deviceService;
+                this.sshService = initializeSSHService(sessionService);
+                this.sessionService = sessionService;
+                
+                // User session
+                this.currentUser = null;
+                this.sessionStartTime = null;
+                this.userStats = {
+                    totalSessions: 0,
+                    totalCommands: 0
+                };
+                
+                // UI State
+                this.currentViewMode = 'grid'; // grid | list
+                this.selectedDevices = new Set();
+                this.isAddDeviceSectionVisible = true;
+                
+                // Components
+                this.deviceCards = new Map();
+                this.sshPanel = null;
+                this.eventBus = this.createEventBus();
+                
+                // Initialize
+                this.init();
+            }
+            
+            async init() {
+                console.log('🚀 PAM Network Management - Initializing...');
+                
+                try {
+                    // Check authentication first
+                    if (!this.checkAuthentication()) {
+                        return; // Redirected to login
+                    }
+                    
+                    // Show loading screen
+                    this.showLoadingScreen();
+                    
+                    // Setup services
+                    await this.setupServices();
+                    
+                    // Setup UI components
+                    this.setupComponents();
+                    
+                    // Setup event listeners
+                    this.setupEventListeners();
+                    
+                    // Load initial data
+                    await this.loadInitialData();
+                    
+                    // Setup user interface
+                    this.setupUserInterface();
+                    
+                    // Hide loading screen
+                    this.hideLoadingScreen();
+                    
+                    console.log('✅ Application initialized successfully');
+                    this.showWelcomeMessage();
+                    
+                } catch (error) {
+                    console.error('❌ Application initialization failed:', error);
+                    this.showError('Uygulama başlatılamadı: ' + error.message);
+                    this.hideLoadingScreen();
+                }
+            }
+            
+            checkAuthentication() {
+                if (!this.authService.isAuthenticated()) {
+                    console.log('User not authenticated, redirecting to login...');
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                
+                this.currentUser = this.authService.getUserSession();
+                this.sessionStartTime = new Date();
+                
+                console.log('User authenticated:', this.currentUser.username);
+                return true;
+            }
+            
+            setupUserInterface() {
+                // Update user info in header
+                const userAvatar = document.getElementById('userAvatar');
+                const userName = document.getElementById('userName');
+                const userRole = document.getElementById('userRole');
+                const welcomeUserName = document.getElementById('welcomeUserName');
+                const lastLoginTime = document.getElementById('lastLoginTime');
+                
+                if (this.currentUser) {
+                    const roleIcons = {
+                        'administrator': '👑',
+                        'network_admin': '🔧',
+                        'support': '🛠️',
+                        'operator': '👤'
+                    };
+                    
+                    const roleNames = {
+                        'administrator': 'Sistem Yöneticisi',
+                        'network_admin': 'Ağ Yöneticisi',
+                        'support': 'Teknik Destek',
+                        'operator': 'Operatör'
+                    };
+                    
+                    if (userAvatar) userAvatar.textContent = roleIcons[this.currentUser.role] || '👤';
+                    if (userName) userName.textContent = this.currentUser.fullName;
+                    if (userRole) userRole.textContent = roleNames[this.currentUser.role] || this.currentUser.role;
+                    if (welcomeUserName) welcomeUserName.textContent = this.currentUser.fullName;
+                    if (lastLoginTime) lastLoginTime.textContent = new Date(this.currentUser.loginTime).toLocaleString();
+                }
+                
+                // Start session timer
+                this.startSessionTimer();
+                
+                // Load user stats
+                this.loadUserStats();
+                
+                // Check permissions and hide/show features
+                this.applyPermissions();
+            }
+            
+            applyPermissions() {
+                // Hide add device section if no write permission
+                if (!this.authService.hasPermission('network_write')) {
+                    const addDeviceSection = document.getElementById('addDeviceSection');
+                    if (addDeviceSection) {
+                        addDeviceSection.style.display = 'none';
+                    }
+                }
+                
+                // Disable bulk operations for operators
+                if (this.currentUser.role === 'operator') {
+                    // Will be applied when bulk actions are shown
+                }
+            }
+            
+            startSessionTimer() {
+                setInterval(() => {
+                    this.updateSessionDuration();
+                }, 1000);
+            }
+            
+            updateSessionDuration() {
+                const sessionDuration = document.getElementById('sessionDuration');
+                if (sessionDuration && this.sessionStartTime) {
+                    const now = new Date();
+                    const diff = now - this.sessionStartTime;
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    sessionDuration.textContent = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+                }
+            }
+            
+            loadUserStats() {
+                // In a real app, these would come from the backend
+                this.userStats = {
+                    totalSessions: Math.floor(Math.random() * 50) + 10,
+                    totalCommands: Math.floor(Math.random() * 500) + 100
+                };
+                
+                const userSessionsCount = document.getElementById('userSessionsCount');
+                const userCommandsCount = document.getElementById('userCommandsCount');
+                
+                if (userSessionsCount) userSessionsCount.textContent = this.userStats.totalSessions;
+                if (userCommandsCount) userCommandsCount.textContent = this.userStats.totalCommands;
+            }
+            
+            showWelcomeMessage() {
+                if (this.currentUser && this.currentUser.role === 'administrator') {
+                    this.showToast('Hoş geldiniz! Sistem yöneticisi yetkileriniz aktif.', 'success');
+                } else {
+                    this.showToast(`Hoş geldiniz, ${this.currentUser.fullName}!`, 'success');
+                }
+            }
+            
+            // User menu functions
+            toggleUserMenu() {
+                const userMenu = document.getElementById('userMenu');
+                if (userMenu) {
+                    userMenu.style.display = userMenu.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+            
+            showUserProfile() {
+                this.toggleUserMenu();
+                this.showModal('User Profile', `
+                    <div class="user-profile-modal">
+                        <div class="profile-header">
+                            <div class="profile-avatar">${document.getElementById('userAvatar').textContent}</div>
+                            <div class="profile-info">
+                                <h3>${this.currentUser.fullName}</h3>
+                                <p>${this.currentUser.email}</p>
+                                <p class="role-badge">${document.getElementById('userRole').textContent}</p>
+                            </div>
+                        </div>
+                        <div class="profile-details">
+                            <div class="detail-row">
+                                <span class="label">Kullanıcı Adı:</span>
+                                <span class="value">${this.currentUser.username}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Rol:</span>
+                                <span class="value">${this.currentUser.role}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Son Giriş:</span>
+                                <span class="value">${new Date(this.currentUser.loginTime).toLocaleString()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Toplam Oturum:</span>
+                                <span class="value">${this.userStats.totalSessions}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Çalıştırılan Komut:</span>
+                                <span class="value">${this.userStats.totalCommands}</span>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            }
+            
+            showAuditLogs() {
+                this.toggleUserMenu();
+                if (!this.authService.hasPermission('audit_read')) {
+                    this.showError('Audit loglarını görüntüleme yetkiniz yok.');
+                    return;
+                }
+                this.showToast('Audit log özelliği yakında...', 'info');
+            }
+            
+            logout() {
+                this.toggleUserMenu();
+                
+                if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+                    this.authService.logout();
+                    this.showToast('Güvenli çıkış yapıldı. Yönlendiriliyorsunuz...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                }
+            }
+            
+            quickStart() {
+                this.showModal('Hızlı Başlangıç Rehberi', `
+                    <div class="quick-start-guide">
+                        <h3>🚀 PAM Network Management'a Hoş Geldiniz!</h3>
+                        <div class="guide-steps">
+                            <div class="guide-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4>Cihaz Ekleyin</h4>
+                                    <p>İlk olarak yönetmek istediğiniz ağ cihazlarını sisteme ekleyin.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4>SSH Bağlantısı</h4>
+                                    <p>Cihazlara SSH ile bağlanarak komutları çalıştırabilirsiniz.</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4>Terminal Kullanın</h4>
+                                    <p>Interaktif terminal ile cihazları yönetebilirsiniz.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="guide-actions">
+                            <button class="btn btn-primary" onclick="app.closeModal(); app.focusAddDevice();">
+                                Başlayalım!
+                            </button>
+                        </div>
+                    </div>
+                `);
+            }
+            
+            showUserGuide() {
+                this.showToast('Kullanım kılavuzu yakında eklenecek...', 'info');
+            }
+            
+            showLoadingScreen() {
+                document.getElementById('loadingScreen').classList.remove('d-none');
+                document.getElementById('mainApp').classList.add('d-none');
+            }
+            
+            hideLoadingScreen() {
+                document.getElementById('loadingScreen').classList.add('d-none');
+                document.getElementById('mainApp').classList.remove('d-none');
+            }
+            
+            async setupServices() {
+                // Device service events
+                this.deviceService.addEventListener((eventType, data) => {
+                    this.handleDeviceServiceEvent(eventType, data);
+                });
+                
+                // SSH service events  
+                this.sshService.addEventListener((eventType, data) => {
+                    this.handleSSHServiceEvent(eventType, data);
+                });
+                
+                // Session service events
+                this.sessionService.addEventListener((eventType, data) => {
+                    this.handleSessionServiceEvent(eventType, data);
+                });
+                
+                // Auth service events
+                this.authService.addEventListener((eventType, data) => {
+                    this.handleAuthServiceEvent(eventType, data);
+                });
+            }
+            
+            setupComponents() {
+                // Initialize SSH Panel
+                this.sshPanel = new SSHPanel(
+                    'sshPanelContainer',
+                    this.sshService,
+                    this.sessionService,
+                    this.eventBus
+                );
+                
+                // Setup event bus listeners
+                this.eventBus.on('deviceAction', (data) => {
+                    this.handleDeviceAction(data);
+                });
+                
+                this.eventBus.on('deviceSelectionChanged', (data) => {
+                    this.handleDeviceSelection(data);
+                });
+            }
+            
+            setupEventListeners() {
+                // Add device form
+                document.getElementById('addDeviceForm').addEventListener('submit', (e) => {
+                    this.handleAddDevice(e);
+                });
+                
+                // Search functionality
+                document.getElementById('deviceSearch').addEventListener('input', (e) => {
+                    this.filterDevices(e.target.value);
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    this.handleKeyboardShortcuts(e);
+                });
+                
+                // Connection status monitoring
+                this.startConnectionMonitoring();
+                
+                // Auto-save preferences
+                this.startAutoSave();
+                
+                // Close user menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    const userMenu = document.getElementById('userMenu');
+                    const userInfo = document.getElementById('userInfo');
+                    
+                    if (userMenu && !userInfo.contains(e.target)) {
+                        userMenu.style.display = 'none';
+                    }
+                });
+            }
+            
+            async loadInitialData() {
+                // Update status
+                this.updateConnectionStatus('loading');
+                
+                try {
+                    // Load devices
+                    const result = await this.deviceService.loadDevices();
+                    
+                    if (result.success) {
+                        this.renderDevices(result.devices);
+                        this.updateStats();
+                        this.updateConnectionStatus('connected');
+                    } else {
+                        throw new Error(result.error);
+                    }
+                    
+                } catch (error) {
+                    console.error('Failed to load initial data:', error);
+                    this.updateConnectionStatus('error');
+                    this.showError('Veriler yüklenemedi: ' + error.message);
+                }
+                
+                // Update last update time
+                this.updateLastUpdateTime();
+            }
+            
+            renderDevices(devices) {
+                const container = document.getElementById('devicesContainer');
+                const emptyState = document.getElementById('emptyState');
+                
+                // Clear existing cards
+                this.deviceCards.clear();
+                
+                if (!devices || devices.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                // Create device grid
+                const deviceGrid = document.createElement('div');
+                deviceGrid.className = `device-grid ${this.currentViewMode}`;
+                
+                // Create device cards using factory
+                const cardFactory = new DeviceCardFactory(this.deviceService, this.eventBus);
+                
+                devices.forEach(device => {
+                    const card = cardFactory.createCard(device);
+                    const cardElement = card.render();
+                    
+                    deviceGrid.appendChild(cardElement);
+                    this.deviceCards.set(device.id, card);
+                });
+                
+                container.innerHTML = '';
+                container.appendChild(deviceGrid);
+                
+                // Update header stats
+                this.updateHeaderStats();
+            }
+            
+            updateStats() {
+                const stats = this.deviceService.getDeviceStats();
+                const container = document.getElementById('statsContainer');
+                
+                container.innerHTML = `
+                    <div class="card stat-card">
+                        <div class="stat-number">${stats.total}</div>
+                        <div class="stat-label">Toplam Cihaz</div>
+                        <div class="stat-trend">📈</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-number">${stats.withVault}</div>
+                        <div class="stat-label">Vault Entegreli</div>
+                        <div class="stat-trend">🔐</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-number">${Object.keys(stats.byType).length}</div>
+                        <div class="stat-label">Cihaz Tipi</div>
+                        <div class="stat-trend">🔧</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-number">🟢</div>
+                        <div class="stat-label">Sistem Durumu</div>
+                        <div class="stat-trend">✅</div>
+                    </div>
+                `;
+            }
+            
+            // Event Handlers
+            handleDeviceServiceEvent(eventType, data) {
+                switch (eventType) {
+                    case 'devicesLoaded':
+                        this.renderDevices(data);
+                        this.updateStats();
+                        break;
+                        
+                    case 'deviceAdded':
+                        this.showToast('Cihaz başarıyla eklendi!', 'success');
+                        this.renderDevices(this.deviceService.getAllDevices());
+                        break;
+                        
+                    case 'error':
+                        this.showError(data);
+                        break;
+                }
+            }
+            
+            handleSSHServiceEvent(eventType, data) {
+                switch (eventType) {
+                    case 'connectionSuccess':
+                        this.showToast(`${data.device.name} bağlantısı başarılı!`, 'success');
+                        break;
+                        
+                    case 'connectionError':
+                        this.showToast(`${data.device?.name || 'Cihaz'} bağlantısı başarısız!`, 'error');
+                        break;
+                }
+            }
+            
+            handleSessionServiceEvent(eventType, data) {
+                switch (eventType) {
+                    case 'sessionSaved':
+                        console.log('Session saved:', data);
+                        break;
+                        
+                    case 'maintenanceCompleted':
+                        console.log('Maintenance completed:', data);
+                        break;
+                }
+            }
+            
+            handleAuthServiceEvent(eventType, data) {
+                switch (eventType) {
+                    case 'logout':
+                        console.log('User logged out:', data);
+                        break;
+                }
+            }
+            
+            handleDeviceAction(data) {
+                const { action, device } = data;
+                
+                // Check permissions
+                if (!this.checkActionPermission(action)) {
+                    this.showError('Bu işlem için yetkiniz yok.');
+                    return;
+                }
+                
+                switch (action) {
+                    case 'ssh-connect':
+                        this.openSSHPanel(device.id);
+                        break;
+                        
+                    case 'quick-test':
+                        this.quickConnect(device.id);
+                        break;
+                        
+                    case 'health-check':
+                        this.performHealthCheck(device.id);
+                        break;
+                        
+                    case 'edit-device':
+                        this.editDevice(device.id);
+                        break;
+                        
+                    case 'delete-device':
+                        this.deleteDevice(device.id);
+                        break;
+                }
+            }
+            
+            checkActionPermission(action) {
+                const permissionMap = {
+                    'ssh-connect': ['network_read'],
+                    'quick-test': ['network_read'],
+                    'health-check': ['network_read'],
+                    'edit-device': ['network_write'],
+                    'delete-device': ['network_write']
+                };
+                
+                const requiredPerms = permissionMap[action];
+                if (!requiredPerms) return true;
+                
+                return requiredPerms.some(perm => this.authService.hasPermission(perm));
+            }
+            
+            handleDeviceSelection(data) {
+                const { device, selected } = data;
+                
+                if (selected) {
+                    this.selectedDevices.add(device.id);
+                } else {
+                    this.selectedDevices.delete(device.id);
+                }
+                
+                this.updateBulkActions();
+            }
+            
+            // Device Actions
+            openSSHPanel(deviceId) {
+                const device = this.deviceService.getDeviceById(deviceId);
+                if (device) {
+                    this.sshPanel.open(device);
+                }
+            }
+            
+            async quickConnect(deviceId) {
+                // Demo implementation with recent credentials
+                const recent = this.sessionService.getRecentConnections();
+                const deviceConnection = recent.find(conn => conn.deviceId === deviceId);
+                
+                if (deviceConnection) {
+                    this.showToast('Son kullanılan kimlik bilgileriyle test ediliyor...', 'info');
+                    // Implement quick connection logic
+                } else {
+                    this.openSSHPanel(deviceId);
+                }
+            }
+            
+            async performHealthCheck(deviceId) {
+                this.showToast('Sağlık kontrolü başlatıldı...', 'info');
+                // Implement health check logic
+            }
+            
+            // UI Helper Methods
+            updateConnectionStatus(status) {
+                const statusElement = document.getElementById('connectionStatus');
+                const statusMap = {
+                    'connected': '🟢 Bağlı',
+                    'loading': '🟡 Bağlanıyor...',
+                    'error': '🔴 Bağlantı Hatası'
+                };
+                
+                statusElement.textContent = statusMap[status] || '🔴 Bilinmeyen';
+            }
+            
+            updateLastUpdateTime() {
+                const element = document.getElementById('lastUpdate');
+                element.textContent = `Son güncelleme: ${new Date().toLocaleTimeString()}`;
+            }
+            
+            updateHeaderStats() {
+                const devices = this.deviceService.getAllDevices();
+                document.getElementById('headerDeviceCount').textContent = devices.length;
+                document.getElementById('headerConnectionCount').textContent = this.sessionService.getRecentConnections().length;
+            }
+            
+            updateBulkActions() {
+                const bulkActions = document.getElementById('bulkActions');
+                const selectedCount = document.getElementById('selectedCount');
+                
+                if (this.selectedDevices.size > 0) {
+                    bulkActions.style.display = 'flex';
+                    selectedCount.textContent = this.selectedDevices.size;
+                } else {
+                    bulkActions.style.display = 'none';
+                }
+            }
+            
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = `
+                    <div class="toast-content">
+                        <span class="toast-message">${message}</span>
+                        <button class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                    </div>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 5000);
+            }
+            
+            showError(message) {
+                this.showToast(message, 'error');
+            }
+            
+            showModal(title, content) {
+                const modalContainer = document.getElementById('modalContainer');
+                modalContainer.innerHTML = `
+                    <div class="modal-overlay" onclick="app.closeModal()">
+                        <div class="modal-content" onclick="event.stopPropagation()">
+                            <div class="modal-header">
+                                <h3>${title}</h3>
+                                <button class="modal-close" onclick="app.closeModal()">×</button>
+                            </div>
+                            <div class="modal-body">
+                                ${content}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            closeModal() {
+                const modalContainer = document.getElementById('modalContainer');
+                modalContainer.innerHTML = '';
+            }
+            
+            // Create simple event bus
+            createEventBus() {
+                const listeners = {};
+                
+                return {
+                    on: (event, callback) => {
+                        if (!listeners[event]) {
+                            listeners[event] = [];
+                        }
+                        listeners[event].push(callback);
+                    },
+                    
+                    emit: (event, data) => {
+                        if (listeners[event]) {
+                            listeners[event].forEach(callback => {
+                                try {
+                                    callback(data);
+                                } catch (error) {
+                                    console.error('Event handler error:', error);
+                                }
+                            });
+                        }
+                    }
+                };
+            }
+            
+            // Utility methods for onclick handlers
+            async handleAddDevice(event) {
+                event.preventDefault();
+                
+                // Check permission
+                if (!this.authService.hasPermission('network_write')) {
+                    this.showError('Cihaz ekleme yetkiniz yok.');
+                    return;
+                }
+                
+                const formData = new FormData(event.target);
+                const deviceData = {
+                    name: formData.get('name'),
+                    ip: formData.get('ip'),
+                    type: formData.get('type'),
+                    vault_path: formData.get('vault_path') || null
+                };
+                
+                const button = document.getElementById('addDeviceBtn');
+                const buttonText = document.getElementById('addDeviceButtonText');
+                const buttonLoading = button.querySelector('.btn-loading');
+                
+                button.disabled = true;
+                buttonText.style.display = 'none';
+                buttonLoading.classList.remove('d-none');
+                
+                try {
+                    const result = await this.deviceService.addDevice(deviceData);
+                    
+                    if (result.success) {
+                        event.target.reset();
+                        this.showToast('Cihaz başarıyla eklendi!', 'success');
+                    } else {
+                        this.showError('Cihaz eklenemedi: ' + result.error);
+                    }
+                } finally {
+                    button.disabled = false;
+                    buttonText.style.display = 'inline';
+                    buttonLoading.classList.add('d-none');
+                }
+            }
+            
+            filterDevices(query) {
+                const devices = this.deviceService.searchDevices(query);
+                this.renderDevices(devices);
+            }
+            
+            toggleViewMode() {
+                this.currentViewMode = this.currentViewMode === 'grid' ? 'list' : 'grid';
+                const btn = document.getElementById('viewModeBtn');
+                btn.textContent = this.currentViewMode === 'grid' ? '📋 Lista' : '🔲 Grid';
+                
+                this.renderDevices(this.deviceService.getAllDevices());
+            }
+            
+            selectAllDevices() {
+                const devices = this.deviceService.getAllDevices();
+                const allSelected = this.selectedDevices.size === devices.length;
+                
+                if (allSelected) {
+                    this.selectedDevices.clear();
+                } else {
+                    devices.forEach(device => this.selectedDevices.add(device.id));
+                }
+                
+                // Update device card selections
+                this.deviceCards.forEach(card => {
+                    const isSelected = this.selectedDevices.has(card.device.id);
+                    card.setSelected(isSelected);
+                });
+                
+                this.updateBulkActions();
+            }
+            
+            startConnectionMonitoring() {
+                setInterval(() => {
+                    this.updateLastUpdateTime();
+                }, 30000); // Update every 30 seconds
+            }
+            
+            startAutoSave() {
+                // Auto-save preferences every 5 minutes
+                setInterval(() => {
+                    const preferences = this.sessionService.getUserPreferences();
+                    // Update any changed preferences
+                }, 5 * 60 * 1000);
+            }
+            
+            handleKeyboardShortcuts(e) {
+                // Ctrl+N: New device
+                if (e.ctrlKey && e.key === 'n') {
+                    e.preventDefault();
+                    this.focusAddDevice();
+                }
+                
+                // Ctrl+F: Focus search
+                if (e.ctrlKey && e.key === 'f') {
+                    e.preventDefault();
+                    document.getElementById('deviceSearch').focus();
+                }
+                
+                // Escape: Clear selections
+                if (e.key === 'Escape') {
+                    this.selectedDevices.clear();
+                    this.updateBulkActions();
+                    
+                    // Close user menu
+                    const userMenu = document.getElementById('userMenu');
+                    if (userMenu) userMenu.style.display = 'none';
+                }
+            }
+            
+            focusAddDevice() {
+                if (!this.authService.hasPermission('network_write')) {
+                    this.showError('Cihaz ekleme yetkiniz yok.');
+                    return;
+                }
+                
+                document.getElementById('deviceName').focus();
+                document.getElementById('addDeviceContainer').scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Placeholder methods for future implementation
+            exportData() { 
+                this.toggleUserMenu();
+                this.showToast('Export özelliği yakında...', 'info'); 
+            }
+            
+            showSettings() { 
+                this.toggleUserMenu();
+                this.showToast('Ayarlar paneli yakında...', 'info'); 
+            }
+            
+            addDeviceQuick() { this.focusAddDevice(); }
+            
+            batchHealthCheck() { 
+                if (!this.authService.hasPermission('network_read')) {
+                    this.showError('Bu işlem için yetkiniz yok.');
+                    return;
+                }
+                this.showToast('Toplu sağlık kontrolü yakında...', 'info'); 
+            }
+            
+            showRecentConnections() { 
+                this.showToast('Son bağlantılar paneli yakında...', 'info'); 
+            }
+            
+            openTerminalManager() { 
+                this.showToast('Terminal yöneticisi yakında...', 'info'); 
+            }
+            
+            toggleAddDeviceSection() {
+                const container = document.getElementById('addDeviceContainer');
+                const toggleText = document.getElementById('addDeviceToggleText');
+                
+                if (this.isAddDeviceSectionVisible) {
+                    container.style.display = 'none';
+                    toggleText.textContent = '🔽 Göster';
+                    this.isAddDeviceSectionVisible = false;
+                } else {
+                    container.style.display = 'block';
+                    toggleText.textContent = '🔼 Gizle';
+                    this.isAddDeviceSectionVisible = true;
+                }
+            }
+            
+            resetAddDeviceForm() {
+                document.getElementById('addDeviceForm').reset();
+                this.showToast('Form temizlendi', 'info');
+            }
+            
+            bulkHealthCheck() { 
+                if (!this.authService.hasPermission('network_read')) {
+                    this.showError('Bu işlem için yetkiniz yok.');
+                    return;
+                }
+                this.showToast('Toplu sağlık kontrolü başlatılıyor...', 'info'); 
+            }
+            
+            bulkCommand() { 
+                if (!this.authService.hasPermission('network_write')) {
+                    this.showError('Bu işlem için yetkiniz yok.');
+                    return;
+                }
+                this.showToast('Toplu komut paneli yakında...', 'info'); 
+            }
+            
+            bulkDelete() {
+                if (!this.authService.hasPermission('network_write')) {
+                    this.showError('Bu işlem için yetkiniz yok.');
+                    return;
+                }
+                
+                if (confirm(`${this.selectedDevices.size} cihazı silmek istediğinizden emin misiniz?`)) {
+                    this.showToast('Toplu silme işlemi yakında...', 'info');
+                }
+            }
+        }
+        
+        // Global app instance
+        let app;
+        
+        // Initialize application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new MainApplication();
+            
+            // Make app globally accessible for onclick handlers
+            window.app = app;
+        });
+        
+        // Service Worker Registration (Future)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // navigator.serviceWorker.register('/sw.js').then(console.log).catch(console.error);
+            });
+        }
+    </script>
+    
+    <!-- Additional CSS for new components -->
+    <style>
+        /* User Info Styles */
+        .user-info {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+        }
+        
+        .user-info:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.95);
+        }
+        
+        .user-role {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .user-menu-toggle {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            transition: transform 0.3s ease;
+        }
+        
+        .user-info:hover .user-menu-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .user-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 200px;
+            z-index: 1000;
+            border: 1px solid #e1e5e9;
+            margin-top: 5px;
+        }
+        
+        .menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            color: #2c3e50;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .menu-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .menu-item:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .menu-item:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .menu-divider {
+            height: 1px;
+            background: #e1e5e9;
+            margin: 5px 0;
+        }
+        
+        .logout-item {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .logout-item:hover {
+            background-color: #fdf2f2;
+        }
+        
+        /* Welcome Banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .welcome-content h2 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .welcome-content p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .welcome-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .welcome-stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stat-card.mini {
+            min-width: 100px;
+            padding: 15px;
+            text-align: center;
+            background: white;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stat-card.mini .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card.mini .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 5px;
+        }
+        
+        .modal-close:hover {
+            color: #e74c3c;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        /* User Profile Modal */
+        .user-profile-modal .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #2196F3;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        .profile-info h3 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        
+        .profile-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .role-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        .profile-details {
+            margin-top: 20px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-row .label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .detail-row .value {
+            color: #666;
+        }
+        
+        /* Quick Start Guide */
+        .quick-start-guide .guide-steps {
+            margin: 20px 0;
+        }
+        
+        .guide-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #2196F3;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .step-content h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        
+        .step-content p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .guide-actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+        
+        .loading-spinner-large {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255, 255, 255, 0.3);
+            border-top: 6px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        /* Header enhancements */
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            margin-right: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.95);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        /* Quick actions */
+        .quick-actions-section {
+            margin-bottom: 30px;
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-action-btn {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 1px solid #dee2e6;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .quick-action-btn:hover {
+            background: linear-gradient(135deg, #e9ecef, #dee2e6);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Section headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .search-box {
+            min-width: 200px;
+        }
+        
+        .view-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* Bulk actions */
+        .bulk-actions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .bulk-info {
+            font-weight: 500;
+            color: #856404;
+        }
+        
+        .bulk-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        /* Footer */
+        .footer {
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            padding: 15px 40px;
+            margin-top: 40px;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .footer-left {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            margin-bottom: 10px;
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast-success { border-left: 4px solid #28a745; }
+        .toast-error { border-left: 4px solid #dc3545; }
+        .toast-warning { border-left: 4px solid #ffc107; }
+        .toast-info { border-left: 4px solid #17a2b8; }
+        
+        .toast-content {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Form enhancements */
+        .form-hint {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        
+        .required {
+            color: #dc3545;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .btn-loading {
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .loading-spinner-small {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header-stats {
+                margin-right: 0;
+            }
+            
+            .welcome-banner {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .quick-actions {
+                justify-content: center;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .section-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .bulk-actions {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                text-align: center;
+                padding: 12px;
+            }
+            
+            .user-details {
+                align-items: center;
+            }
+        }
+        
+        /* Permission-based styling */
+        .permission-denied {
+            opacity: 0.6;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+        
+        .permission-denied::after {
+            content: "🔒 Yetki gerekli";
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+    </style>
+</body>
+</html>

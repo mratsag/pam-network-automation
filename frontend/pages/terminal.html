@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Terminal - PAM Network Management</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="/frontend/assets/css/common.css">
+    <link rel="stylesheet" href="/frontend/assets/css/terminal.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖥️</text></svg>">
+    
+    <!-- Meta Tags -->
+    <meta name="description" content="SSH Terminal - PAM Network Management System">
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body class="terminal-page">
+    <!-- Authentication Check Screen -->
+    <div id="authCheckScreen" class="auth-check-screen">
+        <div class="auth-check-content">
+            <div class="auth-check-spinner"></div>
+            <h2>🔐 Yetki Kontrolü</h2>
+            <p id="authCheckMessage">Kullanıcı kimliği doğrulanıyor...</p>
+            <div class="auth-error d-none" id="authError">
+                <h4>❌ Yetki Hatası</h4>
+                <p id="authErrorMessage">-</p>
+                <div style="margin-top: 1rem;">
+                    <button class="control-btn" onclick="window.location.href='login.html'">
+                        🔐 Giriş Sayfasına Dön
+                    </button>
+                    <button class="control-btn main-menu" onclick="window.location.href='index.html'">
+                        🏠 Ana Sayfa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terminal Loading Screen -->
+    <div id="terminalLoading" class="terminal-loading d-none">
+        <div class="terminal-loading-content">
+            <div class="terminal-loading-spinner"></div>
+            <h2>🖥️ SSH Terminal</h2>
+            <p id="loadingMessage">Bağlantı kuruluyor...</p>
+            <div class="loading-steps">
+                <div class="step" id="step1">📡 Session verisi yükleniyor...</div>
+                <div class="step" id="step2">🔐 SSH kimliği doğrulanıyor...</div>
+                <div class="step" id="step3">🚀 Terminal başlatılıyor...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Terminal Container -->
+    <div id="terminalApp" class="terminal-app d-none">
+        <div class="terminal-container">
+            <!-- Terminal Header -->
+            <header class="terminal-header">
+                <div class="terminal-info">
+                    <div class="device-status">
+                        <div class="status-dot" id="connectionStatus"></div>
+                        <span class="status-text">SSH Terminal</span>
+                    </div>
+                    <div class="device-details">
+                        <div class="device-primary">
+                            <strong class="device-name" id="deviceName">Loading...</strong>
+                            <span class="device-type" id="deviceType"></span>
+                        </div>
+                        <div class="device-secondary">
+                            <span class="connection-info" id="connectionInfo">Connecting...</span>
+                            <span class="session-time" id="sessionTime"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="terminal-controls">
+                    <div class="control-group">
+                        <button class="control-btn" data-action="clear" title="Terminal Temizle (Ctrl+L)">
+                            🗑️ Clear
+                        </button>
+                        <button class="control-btn" data-action="help" title="Yardım">
+                            ❓ Help
+                        </button>
+                    </div>
+                    
+                    <div class="control-group">
+                        <button class="control-btn save" data-action="save" title="Session Kaydet">
+                            💾 Save
+                        </button>
+                        <button class="control-btn" data-action="settings" title="Terminal Ayarları">
+                            ⚙️ Settings
+                        </button>
+                    </div>
+                    
+                    <div class="control-group">
+                        <button class="control-btn" data-action="new-tab" title="Yeni Sekme Aç">
+                            🗔 New Tab
+                        </button>
+                        <button class="control-btn disconnect" data-action="disconnect" title="Bağlantıyı Kes">
+                            🔌 Disconnect
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Terminal Body -->
+            <main class="terminal-body">
+                <div class="terminal-output" id="terminalOutput" tabindex="0">
+                    <!-- Terminal output will be populated here -->
+                </div>
+            </main>
+
+            <!-- Quick Commands Bar -->
+            <div class="quick-commands" id="quickCommands">
+                <div class="quick-commands-header">
+                    <span class="quick-commands-label">Quick Commands:</span>
+                    <div class="quick-commands-controls">
+                        <button class="quick-cmd-btn" onclick="terminal.toggleQuickCommands()" title="Gizle/Göster">
+                            📋
+                        </button>
+                        <button class="quick-cmd-btn" onclick="terminal.customizeQuickCommands()" title="Özelleştir">
+                            ⚙️
+                        </button>
+                    </div>
+                </div>
+                <div class="quick-commands-list" id="quickCommandsList">
+                    <div class="quick-cmd" data-command="help">help</div>
+                    <div class="quick-cmd" data-command="clear">clear</div>
+                    <div class="quick-cmd" data-command="whoami">whoami</div>
+                    <div class="quick-cmd" data-command="pwd">pwd</div>
+                    <!-- More commands will be loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Terminal Input -->
+            <footer class="terminal-input-container">
+                <div class="input-wrapper">
+                    <span class="terminal-prompt" id="terminalPrompt">user@device:~$</span>
+                    <div class="input-container">
+                        <input type="text" 
+                               class="terminal-input" 
+                               id="terminalInput" 
+                               placeholder="Enter command..." 
+                               autocomplete="off"
+                               spellcheck="false">
+                        <div class="input-suggestions" id="inputSuggestions" style="display: none;">
+                            <!-- Command suggestions will appear here -->
+                        </div>
+                    </div>
+                    <div class="input-actions">
+                        <button class="send-btn" id="sendBtn" title="Komut Gönder (Enter)">
+                            <span class="send-icon">▶</span>
+                            <div class="send-loading d-none">
+                                <div class="loading-spinner-small"></div>
+                            </div>
+                        </button>
+                        <button class="input-action-btn" onclick="terminal.showCommandHistory()" title="Komut Geçmişi">
+                            📜
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Status Bar -->
+                <div class="status-bar">
+                    <div class="status-left">
+                        <span class="status-item" id="commandCount">Commands: 0</span>
+                        <span class="status-item" id="sessionDuration">Session: 00:00</span>
+                    </div>
+                    <div class="status-right">
+                        <span class="status-item" id="lastActivity">Active</span>
+                        <span class="status-item" id="connectionQuality">🟢 Stable</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalContainer" class="modal-container"></div>
+    
+    <!-- Notification Container -->
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <!-- JavaScript Files -->
+    <script src="/frontend/assets/js/components/terminal-eventbus.js"></script>
+    <script src="/frontend/assets/js/components/terminal.js"></script>
+    <script src="/frontend/assets/js/components/terminal-app.js"></script>
+    <script src="/frontend/assets/js/api/client.js"></script>
+    <script src="/frontend/assets/js/services/sessionService.js"></script>
+
+</body>
+</html>
