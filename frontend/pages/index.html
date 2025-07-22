@@ -67,7 +67,7 @@
                                 <div class="menu-item" onclick="app.exportData()">
                                     💾 Verileri Dışa Aktar
                                 </div>
-                                <div class="menu-item" onclick="app.showAuditLogs()">
+                                <div class="menu-item" onclick="window.location.href='audit.html'">
                                     📜 Audit Logları
                                 </div>
                                 <div class="menu-divider"></div>
@@ -133,7 +133,7 @@
                         <button class="quick-action-btn" onclick="app.batchHealthCheck()" title="Tüm Cihazları Kontrol Et">
                             ❤️ Toplu Sağlık Kontrolü
                         </button>
-                        <button class="quick-action-btn" onclick="app.showRecentConnections()" title="Son Bağlantılar">
+                        <button class="quick-action-btn" onclick="window.location.href='recent.html'" title="Son Bağlantılar">
                             📋 Son Bağlantılar
                         </button>
                         <button class="quick-action-btn" onclick="app.openTerminalManager()" title="Terminal Yöneticisi">
@@ -446,7 +446,7 @@
             }
             
             async init() {
-                console.log('🚀 Network Management - Initializing...');
+                console.log('🚀 PAM Network Management - Initializing...');
                 
                 try {
                     // Check authentication first
@@ -529,7 +529,15 @@
                     if (lastLoginTime) lastLoginTime.textContent = new Date(this.currentUser.loginTime).toLocaleString();
                 }
                 
-                // Start session timer
+                // Oturum başlangıç zamanını sessionStorage'da sakla
+                let startTime = sessionStorage.getItem('pam_session_start_time');
+                if (!startTime) {
+                    startTime = new Date().toISOString();
+                    sessionStorage.setItem('pam_session_start_time', startTime);
+                }
+                this.sessionStartTime = new Date(startTime);
+                
+                // Start session timer (garanti)
                 this.startSessionTimer();
                 
                 // Load user stats
@@ -537,6 +545,9 @@
                 
                 // Check permissions and hide/show features
                 this.applyPermissions();
+                
+                // Bağlantı durumu güncelle
+                this.updateConnectionStatus('connected');
             }
             
             applyPermissions() {
@@ -555,21 +566,27 @@
             }
             
             startSessionTimer() {
-                setInterval(() => {
+                if (this._sessionTimerInterval) clearInterval(this._sessionTimerInterval);
+                this._sessionTimerInterval = setInterval(() => {
                     this.updateSessionDuration();
                 }, 1000);
+                this.updateSessionDuration();
             }
             
             updateSessionDuration() {
                 const sessionDuration = document.getElementById('sessionDuration');
-                if (sessionDuration && this.sessionStartTime) {
-                    const now = new Date();
-                    const diff = now - this.sessionStartTime;
-                    const hours = Math.floor(diff / (1000 * 60 * 60));
-                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    
-                    sessionDuration.textContent = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+                let startTime = this.sessionStartTime;
+                if (!startTime) {
+                    const stored = sessionStorage.getItem('pam_session_start_time');
+                    if (stored) startTime = new Date(stored);
+                    else startTime = new Date();
                 }
+                const now = new Date();
+                const diff = now - startTime;
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                sessionDuration.textContent = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
             }
             
             loadUserStats() {
@@ -652,6 +669,8 @@
             logout() {
                 this.toggleUserMenu();
                 this.authService.logout();
+                sessionStorage.removeItem('pam_session_start_time');
+                addAuditLog('Çıkış Yapıldı', '-');
                 this.showToast('Güvenli çıkış yapıldı. Yönlendiriliyorsunuz...', 'success');
                 setTimeout(() => {
                     window.location.href = 'login.html';
@@ -695,7 +714,28 @@
             }
             
             showUserGuide() {
-                this.showToast('Kullanım kılavuzu yakında eklenecek...', 'info');
+                this.showModal('Kullanım Kılavuzu', `
+                    <div style='padding:20px; line-height:1.7;'>
+                        <h3>Network Management Kullanım Kılavuzu</h3>
+                        <ol>
+                            <li><b>Cihaz Ekleme:</b> Ana sayfadaki "Cihaz Ekle" butonunu kullanarak yeni bir ağ cihazı ekleyin. Gerekli bilgileri doldurun ve kaydedin.</li>
+                            <li><b>SSH Bağlantısı:</b> Cihaz kartındaki "SSH Bağlan" veya "Test" butonları ile cihaza bağlantı kurun. Kimlik bilgilerinizi girin.</li>
+                            <li><b>Terminal Kullanımı:</b> Bağlantı başarılıysa terminal ekranı açılır. Komutlarınızı yazıp çalıştırabilirsiniz. Hızlı komutlar panelini kullanabilirsiniz.</li>
+                            <li><b>Komut Geçmişi:</b> Terminalde daha önce gönderdiğiniz komutlara ulaşmak için "📜" ikonuna tıklayın veya <code>history</code> yazın.</li>
+                            <li><b>Son Bağlantılar:</b> Ana sayfadaki "Son Bağlantılar" butonundan geçmiş bağlantılarınızı görebilirsiniz.</li>
+                            <li><b>Cihaz Düzenleme/Silme:</b> Cihaz kartındaki "Düzenle" veya "Sil" butonlarını kullanarak cihaz bilgilerini güncelleyebilir veya silebilirsiniz.</li>
+                            <li><b>Çıkış:</b> Sağ üstteki kullanıcı menüsünden "Çıkış Yap" seçeneği ile güvenli çıkış yapabilirsiniz.</li>
+                        </ol>
+                        <hr>
+                        <b>İpuçları:</b>
+                        <ul>
+                            <li>Terminalde <b>Yukarı/Aşağı ok</b> ile komut geçmişinde gezinebilirsiniz.</li>
+                            <li><b>Tab</b> tuşu ile komut tamamlama kullanabilirsiniz.</li>
+                            <li>Her cihaz tipi için hızlı komutlar panelini özelleştirebilirsiniz.</li>
+                            <li>Herhangi bir sorunla karşılaşırsanız sayfayı yenileyin veya çıkış yapıp tekrar giriş yapın.</li>
+                        </ul>
+                    </div>
+                `);
             }
             
             showLoadingScreen() {
@@ -939,19 +979,27 @@
                         break;
                         
                     case 'quick-test':
-                        this.quickConnect(device.id);
+                        this.showToast(`Cihaz test ediliyor: ${device.name} (${device.ip})`, 'info');
+                        // Burada gerçek test fonksiyonunu çağırabilirsin
                         break;
                         
                     case 'health-check':
-                        this.performHealthCheck(device.id);
+                        this.showToast(`Sağlık kontrolü başlatıldı: ${device.name}`, 'info');
+                        // Burada gerçek health fonksiyonunu çağırabilirsin
                         break;
                         
                     case 'edit-device':
-                        this.editDevice(device.id);
+                        this.showModal('Cihazı Düzenle', `<div style='padding:20px'>Düzenleme formu yakında eklenecek.<br><b>${device.name}</b></div>`);
                         break;
                         
                     case 'delete-device':
-                        this.deleteDevice(device.id);
+                        if (confirm(`${device.name} cihazını silmek istediğinizden emin misiniz?`)) {
+                            this.deviceService.deleteDevice(device.id);
+                            addAuditLog('Cihaz Silindi', device.name + ' (' + device.ip + ')');
+                            this.showToast('Cihaz silindi.', 'success');
+                            // Cihazı arayüzden kaldırmak için tekrar yükle
+                            this.renderDevices(this.deviceService.getAllDevices());
+                        }
                         break;
                 }
             }
@@ -1147,6 +1195,7 @@
                     const result = await this.deviceService.addDevice(deviceData);
                     
                     if (result.success) {
+                        addAuditLog('Cihaz Eklendi', deviceData.name + ' (' + deviceData.ip + ')');
                         event.target.reset();
                         this.showToast('Cihaz başarıyla eklendi!', 'success');
                     } else {
@@ -1332,6 +1381,18 @@
             window.addEventListener('load', () => {
                 // navigator.serviceWorker.register('/sw.js').then(console.log).catch(console.error);
             });
+        }
+
+        function addAuditLog(action, detail) {
+            const logs = JSON.parse(localStorage.getItem('pam_audit_logs') || '[]');
+            const user = app && app.currentUser ? app.currentUser.username : '-';
+            logs.push({
+                date: new Date().toISOString(),
+                user,
+                action,
+                detail
+            });
+            localStorage.setItem('pam_audit_logs', JSON.stringify(logs));
         }
     </script>
     

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .json_db import get_devices, add_device, get_users
+from .json_db import get_devices, add_device, get_users, delete_device
 from .routers import connections  # Yeni router
 from pydantic import BaseModel
 from typing import Optional
@@ -87,18 +87,15 @@ async def create_device(device: Device):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to add device: {str(e)}")
 
-@app.get("/devices/{device_id}")
-async def get_device(device_id: int):
+@app.delete("/devices/{device_id}")
+async def remove_device(device_id: int):
     try:
-        devices = get_devices()
-        device = next((d for d in devices if d.get("id") == device_id), None)
-        if not device:
-            raise HTTPException(status_code=404, detail="Device not found")
-        return device
-    except HTTPException:
-        raise
+        deleted = delete_device(device_id)
+        return {"status": "success", "message": "Device deleted successfully", "device": deleted}
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get device: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete device: {str(e)}")
 
 # User endpoints
 @app.get("/users")

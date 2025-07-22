@@ -1117,26 +1117,6 @@ class TerminalApplication {
         window.open(url, '_blank');
     }
     
-    /**
-     * Disconnect
-     */
-    disconnect() {
-        if (confirm('SSH oturumunu sonlandırmak istediğinizden emin misiniz?')) {
-            
-            this.authService.clearSession();
-            this.updateConnectionStatus('disconnected');
-            
-            this.showNotification('SSH oturumu sonlandırıldı. Ana sayfaya yönlendiriliyorsunuz...', 'success');
-            
-            setTimeout(() => {
-                if (window.opener) {
-                    window.close();
-                } else {
-                    window.location.href = 'index.html';
-                }
-            }, 2000);
-        }
-    }
     
     /**
      * Copy selection

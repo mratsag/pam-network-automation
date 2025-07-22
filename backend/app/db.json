@@ -1,27 +1,6 @@
 {
   "devices": [
     {
-      "id": 1,
-      "name": "Ana Switch",
-      "ip": "192.168.1.1",
-      "type": "cisco_ios",
-      "vault_path": "network/devices/switch1"
-    },
-    {
-      "name": "Test Switch",
-      "ip": "192.168.1.100",
-      "type": "cisco_ios",
-      "vault_path": null,
-      "id": 2
-    },
-    {
-      "name": "Access point demo",
-      "ip": "192.168.110.1",
-      "type": "juniper",
-      "vault_path": null,
-      "id": 3
-    },
-    {
       "name": "alma-deneme",
       "ip": "192.168.254.131",
       "type": "ubuntu",
